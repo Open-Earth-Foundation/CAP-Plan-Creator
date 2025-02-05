@@ -5,19 +5,20 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_chroma import Chroma
 from langchain_openai import OpenAIEmbeddings
+from typing import Optional
 
 base_path = Path(__file__).parent.parent
 file_folder_base_path = base_path / "data" / "files"
 
-# PERSISTENT_DIRECTORY = Path(__file__).parent.parent / "chroma_langchain_db"
-
 
 def add_document_to_vectorstore(
+    subfolder: str,
     file_name: str,
     collection_name: str,
     embedding_model: str,
     chunk_size: int,
     chunk_overlap: int,
+    metadata: Optional[dict] = None,
 ):
     """
     Loads documents from `directory`, splits them, and adds them to the vector store.
@@ -33,7 +34,13 @@ def add_document_to_vectorstore(
     chunk_overlap (int) -> default=400
     metadata (dict) -> Metadata to associate with the document chunks.
     """
-    full_file_path = file_folder_base_path / file_name
+    # full_file_path = file_folder_base_path / file_name
+
+    full_file_path = (
+        file_folder_base_path / subfolder / file_name
+        if subfolder
+        else file_folder_base_path / file_name
+    )
 
     vector_store_path = Path(__file__).parent.parent / "vector_stores" / collection_name
 
@@ -64,16 +71,13 @@ def add_document_to_vectorstore(
         # Split PDF using text splitter
         pages = loader.load_and_split(text_splitter)
 
-        # For testing we add meta data here directly
-        metadata = {"level": "national"}
-
-        for page in pages:
-            page.metadata.update(metadata)
-
-        print(pages[:2])
+        # If metadata is provided, update each page's metadata
+        if metadata:
+            for page in pages:
+                page.metadata.update(metadata)
 
         # Add documents to vector store
-        vector_store.add_documents(pages, metadata={"file_name": file_name})
+        vector_store.add_documents(pages)
 
     else:
         print(
@@ -85,6 +89,12 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Add a document to the vector store.")
 
+    parser.add_argument(
+        "--subfolder",
+        type=str,
+        default="",
+        help="Subfolder within the data/files directory where the PDF file is located. Defaults to an empty string.",
+    )
     parser.add_argument(
         "--file_name",
         type=str,
@@ -115,13 +125,36 @@ if __name__ == "__main__":
         default=400,
         help="Size of the overlap between chunks. Defaults to 400.",
     )
+    parser.add_argument(
+        "--metadata",
+        type=str,
+        action="append",
+        help="Metadata as key=value pairs. You can pass multiple flags. Example: --metadata main_action=true --metadata foo=bar",
+    )
 
     args = parser.parse_args()
 
+    metadata_dict = {}
+    if args.metadata:
+        for kv_pair in args.metadata:
+            if "=" in kv_pair:
+                key, value = kv_pair.split("=", 1)
+                # Convert "true"/"false" strings to Python booleans
+                if value.lower() == "true":
+                    metadata_dict[key] = True
+                elif value.lower() == "false":
+                    metadata_dict[key] = False
+                else:
+                    metadata_dict[key] = value  # Keep as string if not true/false
+            else:
+                print(f"Invalid metadata format '{kv_pair}', should be key=value")
+
     add_document_to_vectorstore(
+        subfolder=args.subfolder,
         file_name=args.file_name,
         collection_name=args.collection_name,
         embedding_model=args.embedding_model,
         chunk_size=args.chunk_size,
         chunk_overlap=args.chunk_overlap,
+        metadata=metadata_dict,
     )
