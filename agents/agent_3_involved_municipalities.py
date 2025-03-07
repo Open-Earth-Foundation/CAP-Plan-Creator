@@ -2,7 +2,16 @@ import json
 from langgraph.prebuilt import create_react_agent
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 from state.agent_state import AgentState
+from langchain_openai import ChatOpenAI
+from tools.tools import (
+    search_municipalities_tool,
+)
 
+# Create the agents
+model = ChatOpenAI(model="gpt-4o", temperature=0.0, seed=42)
+
+# Define tools for the agent
+tools = [search_municipalities_tool]
 
 system_prompt_agent_3 = SystemMessage(
     """
@@ -64,7 +73,7 @@ Focus on researching municipal institutions and partners that are relevant for t
 )
 
 
-def build_custom_agent_3(model, tools):
+def build_custom_agent_3():
     """Wrap create_react_agent to store final output in AgentState."""
 
     # The chain returned by create_react_agent
