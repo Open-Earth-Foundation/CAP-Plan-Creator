@@ -28,7 +28,7 @@ You are tasked with defining which climate risks (hazards) for the city are addr
 
 Follow these guidelines carefully to complete the task:
 
-1. Understand the details of climate action that you are provided with.
+1. Understand the details of climate action that you are provided with. Specifically, if the action is a mitigation action or an adaptation action which is given by the `ActionType` field in the climate action data.
 2. Understand the details of the city that you are provided with.
 3. Review the introduction for the climate action implementation plan.
 4. Inspect the provided additional context to climate risks (hazards).
@@ -41,13 +41,17 @@ The final output should include:
 - a headline
 - a bullet point list containing climate risks (hazards) with a brief descriptions of how they are addressed.
 
-<example_output>
+<example_output_adaptation>
 ## Climate Risks:
 
 * Climate risk 1: [brief description]
 * Climate risk 2: [brief description]
 * ...
-</example_output>
+</example_output_adaptation>
+
+<example_output_mitigation>
+The climate action [name of the climate action] addresses mitigation actions and does not primarily address any climate risks (hazards).
+</example_output_mitigation>
 </output>
 
 <tone>

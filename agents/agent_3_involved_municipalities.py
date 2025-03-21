@@ -39,23 +39,21 @@ Include keywords such as "official website," "government agency," or "city depar
 </task>
 
 <tools>
-You have access to an internet search tool that can can be used to look-up specific municipial institutions and their contacts. 
+You have access to an internet search tool that can can be used to look-up specific municipial institutions. 
 Always provide the search query in the nation's national language to get the most relevant results. E.g. use Portuguese for Brazil, French for France, etc.
 </tools>
 
 <output>
-The final output should be a headline and a bullet point list of possibly involved municipal institutions together with their contact information.
-If no contact information is available, omit this part.
+The final output should be a headline and a bullet point list of possibly involved municipal institutions.
+
 <example_output>
 ## Municipal Institutions Involved:
 
 * **[name in national language]**
     * [brief english description]
-    * Contact: [contact information]
     * Source: [<link to the website>]
 * **[name in national language]**
     * [brief english description]
-    * Contact: [contact information]
     * Source: [<link to the website>]
 * ...
 </example_output>
@@ -67,7 +65,7 @@ Avoid overly technical jargon; use language that is accessible to professionals 
 </tone>
 
 <important>
-Focus on researching municipal institutions and partners that are relevant for the action and sub-actions for the specific city.
+Focus on researching only municipal institutions that are relevant for the action and sub-actions for the specific city.
 </important>
 """
 )

@@ -30,7 +30,7 @@ You are tasked with defining which mitigation sectors for the city are addressed
 
 Follow these guidelines carefully to complete the task:
 
-1. Understand the details of climate action that you are provided with.
+1. Understand the details of climate action that you are provided with. Specifically, if the action is a mitigation action or an adaptation action which is given by the `ActionType` field in the climate action data.
 2. Understand the details of the city that you are provided with.
 3. Review the introduction for the climate action implementation plan.
 4. Inspect the provided additional context to climate mitigation sectors.
@@ -43,13 +43,17 @@ The final output should include:
 - a headline
 - a bullet point list containing the mitigation sectors with a brief descriptions of how they are addressed.
 
-<example_output>
+<example_output_mitigation>
 ## Mitigation Sectors:
 
 * Mitigation sector 1: [brief description]
 * Mitigation sector 2: [brief description]
 * ...
-</example_output>
+</example_output_mitigation>
+
+<example_output_adaptation>
+The climate action [name of the climate action] addresses adaptation actions and does not primarily address any mitigation sectors.
+</example_output_adaptation>
 </output>
 
 <tone>

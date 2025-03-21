@@ -32,7 +32,9 @@ Follow these guidelines carefully to complete the task:
 2. Understand the details of the city that you are provided with.
 3. Review the introduction for the climate action implementation plan you are provided with.
 4. Review the sub-actions for implementing the climate action that you are provided with.
-5. Based on the introduction for the climate action and the sub-actions, create milestones for the implementation of the climate action for the given city. The milestones should be specific, achievable and measurable. They should be on the level of the entire climate action and not on the individual sub-actions level. 
+5. Based on the introduction for the climate action and the sub-actions, create milestones for the implementation of the climate action for the given city. 
+    - The milestones should be specific, achievable and measurable. 
+    - The milestones should be on the level of the entire climate action and not on the individual sub-actions level. This means you create milestones for implementing the climate action for the given city and you do not create milestones for each individual sub-action.
 </task>
 
 <output>
