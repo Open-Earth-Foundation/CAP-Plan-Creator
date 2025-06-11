@@ -12,6 +12,9 @@ import threading
 from typing import Optional, List, Dict, Any
 import httpx
 import uvicorn
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 
 # Import the existing plan generation components
 from graph_definition import create_graph
@@ -30,11 +33,29 @@ logger = logging.getLogger(__name__)
 httpx._config.DEFAULT_TIMEOUT_CONFIG.connect = 3000.0  # 300 seconds
 httpx._config.DEFAULT_TIMEOUT_CONFIG.read = 3000.0  # 300 seconds
 
+# Initialize rate limiter
+limiter = Limiter(key_func=get_remote_address)
+
 app = FastAPI(
     title="Climate Action Plan Creator API",
     description="API for generating climate action implementation plans",
     version="1.0.0",
 )
+
+# Add rate limiter to app state
+app.state.limiter = limiter
+
+
+def generic_rate_limit_handler(request: Request, exc: Exception):
+    # Cast the exception to RateLimitExceeded if you need its properties
+    return JSONResponse(
+        status_code=429,
+        content={"detail": "Rate limit exceeded"},
+    )
+
+
+app.add_exception_handler(RateLimitExceeded, generic_rate_limit_handler)
+# app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # Add CORS middleware configuration with more explicit settings
 app.add_middleware(
@@ -108,9 +129,10 @@ def get_city_by_name(city_name: str) -> Dict[str, Any]:
 
 
 @app.get("/")
-async def root():
+@limiter.limit("60/minute")
+async def root(request: Request):
     logger.info("Health check endpoint called")
-    return {"message": "Hello World"}
+    return {"status": "ok"}
 
 
 def _execute_plan_creation(task_uuid: str, request: PlanRequest):
@@ -211,31 +233,34 @@ def _execute_plan_creation(task_uuid: str, request: PlanRequest):
 
 
 @app.post("/start_plan_creation")
-async def start_plan_creation(request: PlanRequest):
+@limiter.limit("3/minute")
+async def start_plan_creation(request: Request, plan_request: PlanRequest):
     """Start asynchronous plan creation process"""
     # Generate a unique task ID
     task_uuid = str(uuid.uuid4())
     logger.info(f"Received plan creation request, assigned task ID: {task_uuid}")
-    logger.info(f"City name: {request.city_name}")
-    logger.info(f"Requested language: {request.language}")
+    logger.info(f"City name: {plan_request.city_name}")
+    logger.info(f"Requested language: {plan_request.language}")
 
     # Validate city name
     try:
-        get_city_by_name(request.city_name)
+        get_city_by_name(plan_request.city_name)
     except ValueError as e:
-        logger.error(f"Invalid city name: {request.city_name}")
+        logger.error(f"Invalid city name: {plan_request.city_name}")
         raise HTTPException(status_code=404, detail=str(e))
 
     # Initialize task status
     task_storage[task_uuid] = {
         "status": "pending",
         "created_at": datetime.now().isoformat(),
-        "action_id": request.action.get("ActionID", "unknown"),
-        "city_name": request.city_name,
+        "action_id": plan_request.action.get("ActionID", "unknown"),
+        "city_name": plan_request.city_name,
     }
 
     # Start background thread for processing
-    thread = threading.Thread(target=_execute_plan_creation, args=(task_uuid, request))
+    thread = threading.Thread(
+        target=_execute_plan_creation, args=(task_uuid, plan_request)
+    )
     thread.daemon = True
     thread.start()
 
@@ -248,7 +273,8 @@ async def start_plan_creation(request: PlanRequest):
 
 
 @app.get("/check_progress/{task_uuid}")
-async def check_progress(task_uuid: str):
+@limiter.limit("60/minute")
+async def check_progress(request: Request, task_uuid: str):
     """Check the progress of a plan creation task"""
     logger.info(f"Checking progress for task: {task_uuid}")
 
@@ -269,7 +295,8 @@ async def check_progress(task_uuid: str):
 
 
 @app.get("/get_plan/{task_uuid}")
-async def get_plan(task_uuid: str):
+@limiter.limit("30/minute")
+async def get_plan(request: Request, task_uuid: str):
     """Get the completed plan for a task"""
     logger.info(f"Retrieving plan for task: {task_uuid}")
 
@@ -306,24 +333,25 @@ async def get_plan(task_uuid: str):
 
 
 # Keep the old endpoint for backward compatibility
-@app.post("/create_plan")
-async def create_plan(request: PlanRequest):
+@app.post("/create_plan", deprecated=True)
+@limiter.limit("3/minute")
+async def create_plan(request: Request, plan_request: PlanRequest):
     logger.warning(
         "Deprecated /create_plan endpoint called. Consider using the new asynchronous API."
     )
     start_time = time.time()
-    action_id = request.action.get("ActionID", "unknown")
+    action_id = plan_request.action.get("ActionID", "unknown")
     logger.info(f"Starting plan creation for action ID: {action_id}")
-    logger.info(f"City name: {request.city_name}")
-    logger.info(f"Requested language: {request.language}")
+    logger.info(f"City name: {plan_request.city_name}")
+    logger.info(f"Requested language: {plan_request.language}")
 
     try:
         # Get city data
         try:
-            city_data = get_city_by_name(request.city_name)
-            logger.info(f"Found city data for {request.city_name}")
+            city_data = get_city_by_name(plan_request.city_name)
+            logger.info(f"Found city data for {plan_request.city_name}")
         except ValueError as e:
-            logger.error(f"City not found: {request.city_name}")
+            logger.error(f"City not found: {plan_request.city_name}")
             raise HTTPException(status_code=404, detail=str(e))
 
         # 1. Initialize the graph and state
@@ -333,7 +361,7 @@ async def create_plan(request: PlanRequest):
 
         logger.info("Initializing agent state")
         initial_state = AgentState(
-            climate_action_data=request.action,
+            climate_action_data=plan_request.action,
             city_data=city_data,
             response_agent_1=AIMessage(""),
             response_agent_2=AIMessage(""),
@@ -347,7 +375,7 @@ async def create_plan(request: PlanRequest):
             response_agent_10=AIMessage(""),
             response_agent_combine="",
             response_agent_translate="",
-            language=request.language,
+            language=plan_request.language,
             messages=[],
         )
         logger.info("Agent state initialized successfully")
@@ -373,7 +401,7 @@ async def create_plan(request: PlanRequest):
             )
         # 3. Save the plan
         timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M")
-        filename = f"{timestamp}_{action_id}_{request.city_name.replace(' ', '_')}_{request.language}_climate_action_implementation_plan.md"
+        filename = f"{timestamp}_{action_id}_{plan_request.city_name.replace(' ', '_')}_{plan_request.language}_climate_action_implementation_plan.md"
         output_path = output_dir / filename
 
         output_dir.mkdir(parents=True, exist_ok=True)
