@@ -9,7 +9,7 @@ from tools.tools import (
 )
 
 # Create the agents
-model = ChatOpenAI(model="gpt-4o", temperature=0.0, seed=42)
+model = ChatOpenAI(model="gpt-4.1-mini", temperature=0.0, seed=42)
 
 # model = ChatOpenAI(model="o3-mini", temperature=None)
 

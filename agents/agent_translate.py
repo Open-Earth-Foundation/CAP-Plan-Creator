@@ -7,7 +7,7 @@ from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 
 # Create the agents
-model = ChatOpenAI(model="gpt-4o", temperature=0.0, seed=42)
+model = ChatOpenAI(model="gpt-4.1-mini", temperature=0.0, seed=42)
 
 # Define prompts for each agent
 system_prompt_agent_translate = SystemMessage(

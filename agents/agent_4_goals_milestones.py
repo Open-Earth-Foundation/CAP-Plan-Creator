@@ -8,7 +8,7 @@ from tools.tools import (
 )
 
 # Create the agents
-model = ChatOpenAI(model="gpt-4o", temperature=0.0, seed=42)
+model = ChatOpenAI(model="gpt-4.1-mini", temperature=0.0, seed=42)
 
 # Define tools for the agent
 tools = [placeholder_tool]
