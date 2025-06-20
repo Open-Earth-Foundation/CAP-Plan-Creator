@@ -208,7 +208,7 @@ search_municipalities_tool = TavilySearchResults(
 #     1-2 sentences explaining your reasoning.
 #     """
 
-#     llm = ChatOpenAI(model="gpt-4o", temperature=0, seed=42)
+#     llm = ChatOpenAI(model="gpt-4.1-mini", temperature=0, seed=42)
 #     response = llm.invoke([HumanMessage(content=prompt_str)])
 
 #     return response.content
@@ -242,7 +242,7 @@ def inspect_retrieved_results(search_query: str, chunk: str):
     If no documents have been retrieved from a search query, return a message to update the search query to be more broad and try again.
     """
 
-    llm = ChatOpenAI(model="gpt-4o", temperature=0, seed=42)
+    llm = ChatOpenAI(model="gpt-4.1-mini", temperature=0, seed=42)
     response = llm.invoke([HumanMessage(content=prompt_str)])
 
     return response.content

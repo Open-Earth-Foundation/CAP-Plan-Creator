@@ -6,7 +6,7 @@ from langchain_openai import ChatOpenAI
 from tools.tools import placeholder_tool
 
 # Create the agents
-model = ChatOpenAI(model="gpt-4o", temperature=0.0, seed=42)
+model = ChatOpenAI(model="gpt-4.1-mini", temperature=0.0, seed=42)
 
 # Define tools for the agent
 tools = [placeholder_tool]
