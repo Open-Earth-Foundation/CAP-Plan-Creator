@@ -5,6 +5,7 @@ from langchain_community.tools.tavily_search import TavilySearchResults
 from langchain_core.messages import HumanMessage
 from langchain_openai import ChatOpenAI
 from langchain.schema import Document
+from openai import OpenAI
 
 
 # Define tools for each agent
@@ -212,6 +213,55 @@ search_municipalities_tool = TavilySearchResults(
 #     response = llm.invoke([HumanMessage(content=prompt_str)])
 
 #     return response.content
+
+
+@tool
+def openai_web_search_tool(
+    query: str,
+    country: str,
+    city: str,
+) -> dict:
+    """
+    Use this tool to search the web for information with relevance to a specific country and city.
+
+    Args:
+        query (str): The search query.
+        country (str): The name of the country the city is located in (two-letter ISO code).
+        city (str): The name of the city the search is related to.
+
+    Returns:
+        dict: A dictionary containing only the following fields from the OpenAI web search response:
+            - content: The main textual answer from the search.
+            - annotations: Any web or source annotations provided by the model.
+    """
+
+    client = OpenAI()
+    completion = client.chat.completions.create(
+        model="gpt-4o-search-preview",
+        web_search_options={
+            "user_location": {
+                "type": "approximate",
+                "approximate": {
+                    "country": country,
+                    "city": city,
+                },
+            },
+            "search_context_size": "medium",
+        },
+        messages=[
+            {
+                "role": "user",
+                "content": query,
+            }
+        ],
+    )
+
+    result = completion.choices[0].model_dump()
+    # Only return content and annotations
+    return {
+        "content": result["message"]["content"],
+        "annotations": result["message"]["annotations"],
+    }
 
 
 @tool
